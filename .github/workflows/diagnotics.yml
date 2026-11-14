@@ -141,15 +141,23 @@ jobs:
         if: always()
         run: ctest --preset debug-homebrew --output-on-failure --no-tests=error
 
+  # ---------------- Docker image (partagée avec ci-linux) ----------------
+  build-docker:
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/docker-linux.yml
+
   # ---------------- Linux : Valgrind & MSan ----------------
   linux:
+    needs: build-docker
     runs-on: ubuntu-latest
     timeout-minutes: 150
     permissions:
       contents: read
       packages: read
     container:
-      image: ghcr.io/${{ github.repository }}/build-linux:ci
+      image: ${{ needs.build-docker.outputs.image_uri }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
@@ -161,10 +169,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Valgrind + Clang
+      - name: Install Clang
         run: |
           apt-get update
-          apt-get install -y valgrind wget gnupg lsb-release ca-certificates
+          apt-get install -y wget gnupg lsb-release ca-certificates
           wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
           bash /tmp/llvm.sh "${CLANG_VERSION}"
 
@@ -196,3 +204,4 @@ jobs:
       - name: Test (MSan)
         if: always()
         run: ctest --preset debug-ninja --output-on-failure --no-tests=error
+
