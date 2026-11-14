@@ -1,6 +1,6 @@
 # .github/workflows/ci-linux.yml
 # Do not modify the name directly.
-name: CI Linux (Ninja + GHCR)
+name: CI Linux (Ninja + GCC)
 
 on:
   push:
