@@ -169,25 +169,18 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Clang
-        run: |
-          apt-get update
-          apt-get install -y wget gnupg lsb-release ca-certificates
-          wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
-          bash /tmp/llvm.sh "${CLANG_VERSION}"
-
       # ----- Valgrind -----
       - name: Configure & Build (Valgrind)
         run: |
           cmake --preset debug-ninja --fresh ${{ env.LINUX_ARGS }} \
             -DCMAKE_PREFIX_PATH="/opt/qt/6.10.2/gcc_64;/opt/oiio;/opt/exiv2" \
-            -DCMAKE_CXX_FLAGS="-g" \
-            -DMEMORYCHECK_COMMAND="$(command -v valgrind)" \
-            -DMEMORYCHECK_COMMAND_OPTIONS="--leak-check=full;--error-exitcode=1"
+            -DCMAKE_CXX_FLAGS="-g"
           cmake --build --preset debug-ninja --parallel $(nproc)
 
       - name: Test (Valgrind)
-        run: ctest --preset debug-ninja -T memcheck --output-on-failure --no-tests=error
+        run: |
+          ctest --preset debug-ninja --output-on-failure --no-tests=error \
+            --test-launcher "valgrind;--leak-check=full;--error-exitcode=1"
 
       # ----- MSan -----
       - name: Configure & Build (MSan)
