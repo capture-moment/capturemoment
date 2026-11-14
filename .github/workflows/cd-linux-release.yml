@@ -1,4 +1,4 @@
-name: CD Linux (Ninja + GHCR)
+name: CD Linux (Ninja + GCC)
 
 on:
   push:

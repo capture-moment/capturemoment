@@ -1,9 +1,6 @@
 name: clang-tidy
 
 on:
-  push:
-    branches: [main, develop]
-    paths-ignore: ['**.md', 'docs/**']
   pull_request:
     branches: [main, develop]
     paths-ignore: ['**.md', 'docs/**']
@@ -24,6 +21,7 @@ env:
   FULL_WARNING_LIMIT: "99999"
   # In a PR, only changed files are analysed: no new warnings allowed.
   PR_WARNING_LIMIT: "0"
+  COMMON_ARGS: "-DBUILD_DESKTOP_UI:BOOL=ON -DBUILD_TESTS:BOOL=ON -DBUILD_DIAGNOSTICS=OFF"
 
 jobs:
   clang-tidy:
@@ -32,6 +30,7 @@ jobs:
     permissions:
       contents: read
       packages: read
+      pull-requests: write # Required for cpp-linter PR reviews / comments
 
     container:
       image: ghcr.io/${{ github.repository }}/build-linux:ci
@@ -58,32 +57,21 @@ jobs:
       # Toolchain: clang + clang-tidy (compile_commands.json is produced by
       # clang, so clang-tidy never sees GCC-only flags)
       # ====================================================================
-      - name: Install clang toolchain
-        run: |
-          apt-get update
-          apt-get install -y --no-install-recommends \
-            wget gnupg lsb-release ca-certificates \
-            jq
-          wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh
-          bash /tmp/llvm.sh "${CLANG_VERSION}"
-          apt-get install -y --no-install-recommends \
-            "clang-${CLANG_VERSION}" "clang-tidy-${CLANG_VERSION}" "clang-tools-${CLANG_VERSION}"
-          clang-tidy-${CLANG_VERSION} --version
+      - name: Toolchain versions
+        run: clang-tidy-${CLANG_VERSION} --version
 
       # ====================================================================
       # Configure + build (generates moc / rcc / qml sources that
       # clang-tidy needs in order to parse the project)
       # ====================================================================
-      - name: Configure (compile_commands.json only)
-        env:
-          CC: clang-${{ env.CLANG_VERSION }}
-          CXX: clang++-${{ env.CLANG_VERSION }}
+      - name: Configure and generate sources
         run: |
-          cmake --preset debug-ninja \
-            -DBUILD_DESKTOP_UI:BOOL=ON \
-            -DBUILD_TESTS:BOOL=ON \
-            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-            -DCMAKE_PREFIX_PATH="/opt/qt/6.10.2/gcc_64;/opt/oiio;/opt/exiv2"
+          cmake --preset debug-ninja ${{ env.COMMON_ARGS }} \
+            -DCMAKE_C_COMPILER=clang-${CLANG_VERSION} \
+            -DCMAKE_CXX_COMPILER=clang++-${CLANG_VERSION} \
+            -DCMAKE_PREFIX_PATH="/opt/qt/6.10.2/gcc_64;/opt/oiio;/opt/exiv2" \
+            -DCMAKE_GLOBAL_AUTOGEN_TARGET=ON
+          cmake --build "${BUILD_DIR}" --target autogen
 
       # ====================================================================
       # Select files: PR -> changed .cpp files; push -> everything.
@@ -141,6 +129,20 @@ jobs:
             2>&1 | tee clang-tidy.log || true
 
       # ====================================================================
+      # Run cpp-linter (for clang-format & advanced formatting review)
+      # ====================================================================
+      - name: Run cpp-linter action
+        uses: cpp-linter/cpp-linter-action@v2
+        id: cpp_linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          version: '${{ env.CLANG_VERSION }}'
+          style: 'file'
+          tidy-checks: ''
+          format-review: true
+
+# ====================================================================
       # Analyse the log: unique warnings + top checks in the job summary
       # ====================================================================
       - name: Analyse clang-tidy output
@@ -165,7 +167,6 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
-          # Inline annotations (first 50 only, GitHub caps the number shown)
           head -n 50 warnings.txt | while IFS= read -r line; do
             file=$(echo "$line" | cut -d: -f1)
             ln=$(echo "$line" | cut -d: -f2)
@@ -184,7 +185,7 @@ jobs:
           if-no-files-found: warn
 
       # ====================================================================
-      # Gate
+      # Gate (Fail if limits are exceeded)
       # ====================================================================
       - name: Check warning limit
         env:
@@ -196,3 +197,9 @@ jobs:
             echo "::error::${COUNT} warning(s) exceed the limit of ${LIMIT}. See the 'clang-tidy-report' artifact."
             exit 1
           fi
+
+      - name: Fail on format errors
+        if: steps.cpp_linter.outputs.checks-failed > 0
+        continue-on-error: true
+        run: |
+          echo "::warning::Formatting or lint issues detected by cpp-linter."

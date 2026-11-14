@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     ninja-build python3 python3-pip python3-venv ccache \
     patchelf desktop-file-utils \
-    libxcb-cursor0 \
+    libxcb-cursor0 valgrind \
     libcurl4-openssl-dev libxkbcommon-dev libgl1-mesa-dev \
     libbrotli-dev libexpat1-dev libinih-dev libssh-dev \
     libxml2-utils zlib1g-dev libjpeg-dev libfreetype-dev \
@@ -17,6 +17,21 @@ RUN apt-get update && apt-get install -y \
     libopenexr-dev \
     libyaml-cpp-dev \
     && rm -rf /var/lib/apt/lists/*
+
+
+# ==============================================================================
+# Update Clang for CI using Clang
+# ==============================================================================
+ARG CLANG_VERSION=23
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        wget gnupg lsb-release ca-certificates jq valgrind ccache \
+    && wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh \
+    && bash /tmp/llvm.sh ${CLANG_VERSION} \
+    && apt-get install -y --no-install-recommends \
+        clang-tidy-${CLANG_VERSION} clang-tools-${CLANG_VERSION} \
+    && rm -rf /var/lib/apt/lists/* /tmp/llvm.sh
+
+ENV CLANG_VERSION=${CLANG_VERSION}
 
 # ==============================================================================
 # AppImage packaging tools
