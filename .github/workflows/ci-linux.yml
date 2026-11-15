@@ -14,9 +14,9 @@ env:
 
 jobs:
   # ====================================================================
-  # Construct the Docker image and push it to GHCR
+  # Wait the image docker
   # ====================================================================
-  wait-image:
+  wait-image-docker-linux:
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.wait.outputs.image }}
@@ -45,10 +45,10 @@ jobs:
   # Build and Test the Project
   # ====================================================================
   build:
-    needs: wait-image
+    needs: wait-image-docker-linux
     runs-on: ubuntu-latest
 
-    container: ${{ needs.wait-image.outputs.image }}
+    container: ${{ needs.wait-image-docker-linux.outputs.image }}
     strategy:
       matrix:
         build-type: [Release, Debug]

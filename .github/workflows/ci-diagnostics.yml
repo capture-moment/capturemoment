@@ -142,7 +142,7 @@ jobs:
         run: ctest --preset debug-homebrew --output-on-failure --no-tests=error
 
   # ---------------- Docker image ----------------
-  wait-image:
+  wait-image-docker-linux:
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.wait.outputs.image }}
@@ -169,14 +169,14 @@ jobs:
 
   # ---------------- Linux : Valgrind & MSan ----------------
   linux:
-    needs: wait-image
+    needs: wait-image-docker-linux
     runs-on: ubuntu-latest
     timeout-minutes: 150
     permissions:
       contents: read
       packages: read
     container:
-      image: ${{ needs.wait-image.outputs.image }}
+      image: ${{ needs.wait-image-docker-linux.outputs.image }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}

@@ -24,7 +24,7 @@ env:
   COMMON_ARGS: "-DBUILD_DESKTOP_UI:BOOL=ON -DBUILD_TESTS:BOOL=ON -DBUILD_DIAGNOSTICS=OFF"
 
 jobs:
-  wait-image:
+  wait-image-docker-linux:
     runs-on: ubuntu-latest
     outputs:
       image: ${{ steps.wait.outputs.image }}
@@ -56,9 +56,9 @@ jobs:
       packages: read
       pull-requests: write # Required for cpp-linter PR reviews / comments
 
-    needs: wait-image
+    needs: wait-image-docker-linux
     container:
-      image: ${{ needs.wait-image.outputs.image }}
+      image: ${{ needs.wait-image-docker-linux.outputs.image }}
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
