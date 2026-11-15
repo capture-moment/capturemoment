@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: diagnostics
+  group: diagnostics-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -19,11 +19,19 @@ env:
   INSTALL_PREFIX: "/Users/runner/local"
   CLANG_VERSION: "23"
 
+  # Windows
+  USERNAME: ${{ github.repository_owner }}
+  FEED_URL: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json,readwrite"
+
 jobs:
   # ---------------- Windows : ASan ----------------
   windows:
     runs-on: windows-latest
     timeout-minutes: 90
+    permissions:
+      packages: write
+
     steps:
       - uses: actions/checkout@v7
         with:
@@ -44,6 +52,20 @@ jobs:
           git checkout cd61e1e26a038e82d6550a3ebbe0fbbfe7da78e3
           .\bootstrap-vcpkg.bat
           echo "VCPKG_ROOT=C:\vcpkg" >> $env:GITHUB_ENV
+      - name: Configure NuGet source for vcpkg cache
+        shell: pwsh
+        env:
+          FEED_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $nugetExe = & "$env:VCPKG_ROOT\vcpkg.exe" fetch nuget | Select-Object -Last 1
+          Write-Host "Using NuGet executable: $nugetExe"
+          & $nugetExe sources add `
+            -Source "$env:FEED_URL" `
+            -StorePasswordInClearText `
+            -Name "GitHubPackages" `
+            -UserName "$env:USERNAME" `
+            -Password "$env:FEED_TOKEN"
+          & $nugetExe setapikey "$env:FEED_TOKEN" -Source "$env:FEED_URL"
 
       - uses: TheMrMilchmann/setup-msvc-dev@v4
         with:
@@ -71,6 +93,13 @@ jobs:
           submodules: recursive
 
       - run: brew install ccache inih libpng jpeg libtiff openexr pystring
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: ~/Library/Caches/ccache
+          key: ccache-diagnostics-macos-${{ github.sha }}
+          restore-keys: ccache-diagnostics-macos-
 
       - name: Cache Exiv2
         id: cache-exiv2
@@ -121,6 +150,7 @@ jobs:
           cmake --preset debug-homebrew --fresh ${{ env.COMMON_ARGS }} \
             -DCMAKE_PREFIX_PATH="${{ env.INSTALL_PREFIX }}/exiv2;${{ env.INSTALL_PREFIX }}/oiio" \
             -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g" \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g"
           cmake --build --preset debug-homebrew --parallel
 
@@ -134,6 +164,7 @@ jobs:
           cmake --preset debug-homebrew --fresh ${{ env.COMMON_ARGS }} \
             -DCMAKE_PREFIX_PATH="${{ env.INSTALL_PREFIX }}/exiv2;${{ env.INSTALL_PREFIX }}/oiio" \
             -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -g" \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache \
             -DCMAKE_C_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -g"
           cmake --build --preset debug-homebrew --parallel
 
