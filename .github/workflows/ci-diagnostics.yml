@@ -12,8 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  COMMON_ARGS: "-Ddesktop_ui=ON -Dtests=ON -DBUILD_DIAGNOSTICS=OFF"
-  LINUX_ARGS: "-DBUILD_DESKTOP_UI:BOOL=ON -DBUILD_TESTS:BOOL=ON -DBUILD_DIAGNOSTICS=OFF"
+  COMMON_ARGS: "-DBUILD_DESKTOP_UI=ON -DBUILD_TESTS=ON -DBUILD_DIAGNOSTICS=OFF"
   EXIV2_VERSION: "v0.28.7"
   OIIO_VERSION: "v3.1.14.0"
   INSTALL_PREFIX: "/Users/runner/local"
@@ -222,7 +221,7 @@ jobs:
       # ----- Valgrind -----
       - name: Configure & Build (Valgrind)
         run: |
-          cmake --preset debug-ninja --fresh ${{ env.LINUX_ARGS }} \
+          cmake --preset debug-ninja --fresh ${{ env.COMMON_ARGS }} \
             -DCMAKE_PREFIX_PATH="/opt/qt/6.10.2/gcc_64;/opt/oiio;/opt/exiv2" \
             -DCMAKE_CXX_FLAGS="-g" \
             -DCMAKE_TEST_LAUNCHER="valgrind;--leak-check=full;--error-exitcode=1;-s;--suppressions=${GITHUB_WORKSPACE}/tests/ignore_tests/valgrind.supp"

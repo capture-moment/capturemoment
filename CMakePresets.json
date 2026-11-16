@@ -40,6 +40,7 @@
             "generator": "Ninja",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_TESTS": "ON",
                 "BUILD_DIAGNOSTICS": "ON"
             }
         },
@@ -78,6 +79,7 @@
                 "CMAKE_BUILD_TYPE": "Debug",
                 "VCPKG_HOST_TRIPLET": "x64-windows",
                 "VCPKG_TARGET_TRIPLET": "x64-windows",
+                "BUILD_TESTS": "ON",
                 "BUILD_DIAGNOSTICS": "ON"
 
             },
@@ -118,6 +120,7 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_PREFIX_PATH": "/opt/exiv2;/opt/oiio;/opt/homebrew;/usr/local",
+                "BUILD_TESTS": "ON",
                 "BUILD_DIAGNOSTICS": "ON"
             }
         },

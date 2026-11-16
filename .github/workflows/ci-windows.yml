@@ -9,7 +9,7 @@ env:
   USERNAME: ${{ github.repository_owner }}
   FEED_URL: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
   VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json,readwrite"
-  COMMON_ARGS: "-Ddesktop_ui=ON -Dtests=ON -DBUILD_DIAGNOSTICS=OFF"
+  COMMON_ARGS: "-Ddesktop_ui=ON -DBUILD_TESTS=ON -DBUILD_DIAGNOSTICS=OFF"
 
 
 jobs:
