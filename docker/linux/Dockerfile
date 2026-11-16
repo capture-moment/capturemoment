@@ -93,4 +93,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         clang-23 clang-tidy-23 clang-tools-23 libclang-rt-23-dev \
     && rm -rf /var/lib/apt/lists/*
 
+RUN GCC_DIR="$(dirname "$(gcc -print-libgcc-file-name)")" \
+    && for c in clang clang++; do \
+         echo "--gcc-install-dir=${GCC_DIR}" > "/usr/lib/llvm-23/bin/${c}.cfg"; \
+       done
+
 WORKDIR /app
