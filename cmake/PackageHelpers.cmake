@@ -171,10 +171,11 @@ function(find_halide_package)
     set(Python_EXECUTABLE  "${_venv_python}" CACHE FILEPATH "" FORCE)
     set(Python3_EXECUTABLE "${_venv_python}" CACHE FILEPATH "" FORCE)
 
-    # 5. Locate the CMake package inside the venv
+    # 5. Locate the CMake package inside the venv.
     find_package(Halide ${_halide_version} CONFIG REQUIRED
         PATHS
-          "${_halide_dir}"
+          "${_halide_dir}/lib64/cmake/Halide"
+          "${_halide_dir}/lib/cmake/Halide"
         NO_DEFAULT_PATH
     )
 
