@@ -24,6 +24,8 @@ env:
 jobs:
   wait-image-docker-linux:
     runs-on: ubuntu-latest
+    permissions:
+      packages: read
     outputs:
       image: ${{ steps.wait.outputs.image }}
     steps:
