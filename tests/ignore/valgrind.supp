@@ -1,0 +1,12 @@
+{
+   libraw_open_file_uninit
+   Memcheck:Cond
+   fun:_ZN6LibRaw9open_fileEPKc
+   ...
+}
+{
+   oiio_imagecache_invalidate_uninit
+   Memcheck:Cond
+   fun:_ZN16OpenImageIO_v3_1*ImageCacheImpl10invalidate*
+   ...
+}
