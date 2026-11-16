@@ -245,7 +245,7 @@ std::expected<void, ErrorHandling::CoreError> SourceManager::loadStandardFile(st
             return std::unexpected(conversion.error());
         }
 
-        auto [is_linear, cs_name] { Utils::analyzeColorSpace(buf_result->spec()) };
+        std::tie(is_linear, cs_name) = Utils::analyzeColorSpace(buf_result->spec());
 
         spdlog::debug("[SourceManager::loadStandardFile]: is linear: '{}' new space: '{}' ",
                       is_linear, cs_name);

@@ -28,8 +28,9 @@
 
 namespace CaptureMoment::Core::Operations {
 
-void OperationRegistry::registerAll(OperationFactory& factory) {
-    spdlog::info("OperationRegistry: Registering all operations");
+void OperationRegistry::registerAll(OperationFactory& factory)
+{
+    spdlog::info("[OperationRegistry::registerAll]: Registering all operations");
 
     registerToneAdjustments(factory);
     // registerColorOperations(factory);
@@ -37,35 +38,36 @@ void OperationRegistry::registerAll(OperationFactory& factory) {
     // registerDetailOperations(factory);
     // registerEffects(factory);
 
-    spdlog::info("OperationRegistry: All operations registered");
+    spdlog::info("[OperationRegistry::registerAll]: All operations registered");
 }
 
-void OperationRegistry::registerToneAdjustments(OperationFactory& factory) {
-    spdlog::debug("OperationRegistry: Registering tone adjustment operations");
+void OperationRegistry::registerToneAdjustments(OperationFactory& factory)
+{
+    spdlog::debug("[OperationRegistry::registerToneAdjustments]: Registering tone adjustment operations");
 
     // Brightness
     factory.registerCreator(OperationType::Brightness, []() { return std::make_unique<OperationBrightness>(); });
-    spdlog::trace("Factory register Brightness");
+    spdlog::trace("[OperationRegistry::registerToneAdjustments]: Factory register Brightness");
 
     // Contrast
     factory.registerCreator(OperationType::Contrast, []() { return std::make_unique<OperationContrast>(); });
-    spdlog::trace("Factory register Contrast");
+    spdlog::trace("[OperationRegistry::registerToneAdjustments]: Factory register Contrast");
 
     // Highlights
     factory.registerCreator(OperationType::Highlights, []() { return std::make_unique<OperationHighlights>(); });
-    spdlog::trace("Factory register Highlights");
+    spdlog::trace("[OperationRegistry::registerToneAdjustments]: Factory register Highlights");
 
     // Shadows
     factory.registerCreator(OperationType::Shadows, []() { return std::make_unique<OperationShadows>(); });
-    spdlog::trace("Factory register Shadows");
+    spdlog::trace("[OperationRegistry::registerToneAdjustments]: Factory register Shadows");
 
     // Whites
     factory.registerCreator(OperationType::Whites, []() { return std::make_unique<OperationWhites>(); });
-    spdlog::trace("Factory register Whites");
+    spdlog::trace("[OperationRegistry::registerToneAdjustments]: Factory register Whites");
 
     // Blacks
     factory.registerCreator(OperationType::Blacks, []() { return std::make_unique<OperationBlacks>(); });
-    spdlog::trace("Factory register Blacks");
+    spdlog::trace("[OperationRegistry::registerToneAdjustments]: Factory register Blacks");
 
     // factory.registerCreator(OperationType::Exposure, []() { return std::make_unique<OperationExposure>(); });
     // spdlog::trace("ok: Exposure");
@@ -73,8 +75,9 @@ void OperationRegistry::registerToneAdjustments(OperationFactory& factory) {
     // REMOVED DUPLICATE: factory.registerCreator(OperationType::Shadows, []() { return std::make_unique<OperationShadows>(); });
 }
 
-void OperationRegistry::registerColorOperations(OperationFactory& factory) {
-    spdlog::debug("OperationRegistry: Registering color operations");
+void OperationRegistry::registerColorOperations([[maybe_unused]] OperationFactory& factory)
+{
+    spdlog::debug("[OperationRegistry::registerColorOperations]: Registering color operations");
 
     // TODO: Add color operations as they are implemented
     // factory.registerCreator(OperationType::Saturation, []() { return std::make_unique<OperationSaturation>(); });
@@ -90,8 +93,9 @@ void OperationRegistry::registerColorOperations(OperationFactory& factory) {
     // spdlog::trace("ok: Color Grade");
 }
 
-void OperationRegistry::registerColorProfiles(OperationFactory& factory) {
-    spdlog::debug("OperationRegistry: Registering color profile operations");
+void OperationRegistry::registerColorProfiles([[maybe_unused]] OperationFactory& factory)
+{
+    spdlog::debug("[OperationRegistry::registerColorProfiles]: Registering color profile operations");
 
     // TODO: Add color profile operations as they are implemented
     // factory.registerCreator(OperationType::ColorProfile, []() { return std::make_unique<OperationColorProfile>(); });
@@ -104,8 +108,9 @@ void OperationRegistry::registerColorProfiles(OperationFactory& factory) {
     // spdlog::trace("ok: Color Space Conversion");
 }
 
-void OperationRegistry::registerDetailOperations(OperationFactory& factory) {
-    spdlog::debug("OperationRegistry: Registering detail operations");
+void OperationRegistry::registerDetailOperations([[maybe_unused]] OperationFactory& factory)
+{
+    spdlog::debug("[OperationRegistry::]:registerDetailOperations Registering detail operations");
 
     // TODO: Add detail operations as they are implemented
     // factory.registerCreator(OperationType::Sharpen, []() { return std::make_unique<OperationSharpen>(); });
@@ -121,8 +126,9 @@ void OperationRegistry::registerDetailOperations(OperationFactory& factory) {
     // spdlog::trace("ok: Denoise");
 }
 
-void OperationRegistry::registerEffects(OperationFactory& factory) {
-    spdlog::debug("OperationRegistry: Registering effect operations");
+void OperationRegistry::registerEffects([[maybe_unused]] OperationFactory& factory)
+{
+    spdlog::debug("[OperationRegistry::registerEffects]: Registering effect operations");
 
     // TODO: Add effect operations as they are implemented
     // factory.registerCreator(OperationType::Blur, []() { return std::make_unique<OperationBlur>(); });
