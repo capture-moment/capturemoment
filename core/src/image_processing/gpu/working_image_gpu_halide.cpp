@@ -30,9 +30,9 @@ bool WorkingImageGPU_Halide::bindView(const ImageView& view)
     }
     m_original_halide_buffer = Halide::Buffer<float>::make_interleaved(
         const_cast<float*>(m_view_data_image.original_data.data()),
-        m_view_data_image.width,
-        m_view_data_image.height,
-        m_view_data_image.channels
+        static_cast<int>(m_view_data_image.width),
+        static_cast<int>(m_view_data_image.height),
+        static_cast<int>(m_view_data_image.channels)
         );
     m_original_halide_buffer.set_name("original_cpu_buffer");
 

@@ -20,11 +20,22 @@ std::unique_ptr<Common::ImageRegion> convert_RGBA_F32_to_RGBA_U8(const Common::I
     }
 
     // 1. Setup OIIO Source Buffer (Zero-Copy)
-    OIIO::ImageSpec src_spec(input.m_width, input.m_height, input.m_channels, OIIO::TypeDesc::FLOAT);
+    OIIO::ImageSpec src_spec(
+        static_cast<int>(input.m_width),
+        static_cast<int>(input.m_height),
+        static_cast<int>(input.m_channels),
+        OIIO::TypeDesc::FLOAT
+    );
+
     OIIO::ImageBuf src_buf(src_spec, const_cast<float*>(input.m_data.data()));
 
     // 2. Setup OIIO Destination Spec
-    OIIO::ImageSpec dst_spec(input.m_width, input.m_height, input.m_channels, OIIO::TypeDesc::UINT8);
+    OIIO::ImageSpec dst_spec(
+        static_cast<int>(input.m_width),
+        static_cast<int>(input.m_height),
+        static_cast<int>(input.m_channels),
+        OIIO::TypeDesc::UINT8
+    );
     OIIO::ImageBuf dst_buf(dst_spec);
 
     // 3. Perform Conversion (F32 -> U8) using OIIO
