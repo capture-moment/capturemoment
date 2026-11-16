@@ -47,7 +47,6 @@ RUN mkdir -p /opt/tools && cd /opt/tools && \
 # Install Python core packages
 # ==============================================================================
 RUN pip3 install --break-system-packages cmake aqtinstall
-RUN pip3 install --break-system-packages --only-binary :all: halide==22.1.0
 
 # ==============================================================================
 # Install Qt framework
