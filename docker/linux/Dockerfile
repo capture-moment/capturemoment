@@ -1,4 +1,4 @@
-FROM gcc:16.2.0
+FROM gcc:16.2-trixie
 
 ENV DEBIAN_FRONTEND=noninteractive
 
