@@ -224,13 +224,12 @@ jobs:
         run: |
           cmake --preset debug-ninja --fresh ${{ env.LINUX_ARGS }} \
             -DCMAKE_PREFIX_PATH="/opt/qt/6.10.2/gcc_64;/opt/oiio;/opt/exiv2" \
-            -DCMAKE_CXX_FLAGS="-g"
+            -DCMAKE_CXX_FLAGS="-g" \
+            -DCMAKE_TEST_LAUNCHER="valgrind;--leak-check=full;--error-exitcode=1"
           cmake --build --preset debug-ninja --parallel $(nproc)
 
       - name: Test (Valgrind)
-        run: |
-          ctest --preset debug-ninja --output-on-failure --no-tests=error \
-            --test-launcher "valgrind;--leak-check=full;--error-exitcode=1"
+        run: ctest --preset debug-ninja --output-on-failure --no-tests=error
 
       # ----- MSan -----
       - name: Configure & Build (MSan)
