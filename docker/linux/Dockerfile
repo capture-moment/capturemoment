@@ -18,21 +18,6 @@ RUN apt-get update && apt-get install -y \
     libyaml-cpp-dev \
     && rm -rf /var/lib/apt/lists/*
 
-
-# ==============================================================================
-# Update Clang for CI using Clang
-# ==============================================================================
-ARG CLANG_VERSION=23
-RUN apt-get update && apt-get install -y --no-install-recommends \
-        wget gnupg lsb-release ca-certificates jq valgrind ccache \
-    && wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh \
-    && bash /tmp/llvm.sh ${CLANG_VERSION} \
-    && apt-get install -y --no-install-recommends \
-        clang-tidy-${CLANG_VERSION} clang-tools-${CLANG_VERSION} \
-    && rm -rf /var/lib/apt/lists/* /tmp/llvm.sh
-
-ENV CLANG_VERSION=${CLANG_VERSION}
-
 # ==============================================================================
 # AppImage packaging tools
 # ==============================================================================
@@ -93,5 +78,16 @@ RUN git clone --depth 1 --branch v3.1.14.0 \
     cmake --build /tmp/oiio-build --parallel $(nproc) && \
     cmake --install /tmp/oiio-build && \
     rm -rf /tmp/*
+
+# ==============================================================================
+# LLVM/Clang toolchain (clang-tidy, run-clang-tidy)
+# ==============================================================================
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        wget gnupg lsb-release ca-certificates jq \
+    && wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh \
+    && bash /tmp/llvm.sh "23" \
+    && apt-get install -y --no-install-recommends \
+        clang-23 clang-tidy-23 clang-tools-23 \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

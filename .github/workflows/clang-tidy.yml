@@ -15,8 +15,6 @@ permissions:
 
 env:
   CLANG_VERSION: "23"
-  BUILD_DIR: build/debug-ninja
-  # Warning ceilings (unique warnings). Lower them as the code is cleaned up.
   # First run: read the count in the summary, then set the limit just above it.
   FULL_WARNING_LIMIT: "99999"
   # In a PR, only changed files are analysed: no new warnings allowed.
@@ -83,7 +81,19 @@ jobs:
       # clang, so clang-tidy never sees GCC-only flags)
       # ====================================================================
       - name: Toolchain versions
-        run: clang-tidy-${CLANG_VERSION} --version
+        run: clang-tidy-23 --version
+      
+
+      # ====================================================================
+      # set BUILD_DIR path
+      # ====================================================================
+      - name: Resolve build directory from preset
+        run: |
+          RAW=$(jq -r '.configurePresets[] | select(.name == "debug-ninja") | .binaryDir // empty' CMakePresets.json)
+          # Expansion des macros CMake éventuelles (${sourceDir}, ...)
+          BUILD_DIR=$(python3 -c 'import os,sys; print(os.path.expandvars(sys.argv[1].replace("${sourceDir}", os.getcwd())))' "$RAW")
+          echo "BUILD_DIR=$BUILD_DIR" >> "$GITHUB_ENV"
+          echo "build dir: $BUILD_DIR"
 
       # ====================================================================
       # Configure + build (generates moc / rcc / qml sources that
@@ -96,7 +106,7 @@ jobs:
             -DCMAKE_CXX_COMPILER=clang++-${CLANG_VERSION} \
             -DCMAKE_PREFIX_PATH="/opt/qt/6.10.2/gcc_64;/opt/oiio;/opt/exiv2" \
             -DCMAKE_GLOBAL_AUTOGEN_TARGET=ON
-          cmake --build "${BUILD_DIR}" --target autogen
+          cmake --build --preset debug-ninja --target autogen
 
       # ====================================================================
       # Select files: PR -> changed .cpp files; push -> everything.
@@ -167,7 +177,7 @@ jobs:
           tidy-checks: ''
           format-review: true
 
-# ====================================================================
+      # ====================================================================
       # Analyse the log: unique warnings + top checks in the job summary
       # ====================================================================
       - name: Analyse clang-tidy output
