@@ -167,11 +167,14 @@ function(find_halide_package)
     file(TO_CMAKE_PATH "${_halide_dir}" _halide_dir)
     message(STATUS "Halide install dir: ${_halide_dir}")
 
-    # 4. Locate the CMake package inside the venv
+    # 4. Route all CMake Python lookups to the venv interpreter: the Halide
+    set(Python_EXECUTABLE  "${_venv_python}" CACHE FILEPATH "" FORCE)
+    set(Python3_EXECUTABLE "${_venv_python}" CACHE FILEPATH "" FORCE)
+
+    # 5. Locate the CMake package inside the venv
     find_package(Halide ${_halide_version} CONFIG REQUIRED
-        PATHS 
+        PATHS
           "${_halide_dir}"
-          "${_venv_dir}"
         NO_DEFAULT_PATH
     )
 
