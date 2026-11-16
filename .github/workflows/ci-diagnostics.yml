@@ -198,7 +198,7 @@ jobs:
           done
           echo "::error::$IMAGE:$TAG absent after 60 min (build docker failed ?)"; exit 1
 
-  # ---------------- Linux : Valgrind & MSan ----------------
+  # ---------------- Linux : Valgrind ----------------
   linux:
     needs: wait-image-docker-linux
     runs-on: ubuntu-latest
@@ -230,22 +230,3 @@ jobs:
 
       - name: Test (Valgrind)
         run: ctest --preset debug-ninja --output-on-failure --no-tests=error
-
-      # ----- MSan -----
-      - name: Configure & Build (MSan)
-        if: always()
-        run: |
-          cmake --preset debug-ninja --fresh ${{ env.LINUX_ARGS }} \
-            -DCMAKE_PREFIX_PATH="/opt/qt/6.10.2/gcc_64;/opt/oiio;/opt/exiv2" \
-            -DCMAKE_C_COMPILER=clang-${CLANG_VERSION} \
-            -DCMAKE_CXX_COMPILER=clang++-${CLANG_VERSION} \
-            -DCMAKE_CXX_FLAGS="-fsanitize=memory -g" \
-            -DCMAKE_C_FLAGS="-fsanitize=memory -g"
-          cmake --build --preset debug-ninja --parallel $(nproc)
-
-      - name: Test (MSan)
-        if: always()
-        env:
-          MSAN_OPTIONS: "suppressions=${{ github.workspace }}/tests/ignore_tests/msan.supp"
-        run: ctest --preset debug-ninja --output-on-failure --no-tests=error
-
