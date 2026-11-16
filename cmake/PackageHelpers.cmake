@@ -96,6 +96,10 @@ function(find_openimageio_package)
     endif()
     
     if(OpenImageIO_FOUND)
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND TARGET OpenImageIO::OpenImageIO)
+            target_compile_definitions(OpenImageIO::OpenImageIO INTERFACE FMT_CONSTEVAL=)
+        endif()
+
         set(OpenImageIO_FOUND TRUE PARENT_SCOPE)
         set(OpenImageIO_VERSION ${OpenImageIO_VERSION} PARENT_SCOPE)
     else()
