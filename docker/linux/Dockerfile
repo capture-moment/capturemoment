@@ -84,10 +84,13 @@ RUN git clone --depth 1 --branch v3.1.14.0 \
 # ==============================================================================
 RUN apt-get update && apt-get install -y --no-install-recommends \
         wget gnupg lsb-release ca-certificates jq \
-    && wget -qO /tmp/llvm.sh https://apt.llvm.org/llvm.sh \
-    && bash /tmp/llvm.sh "23" \
+    && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+        | gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] https://apt.llvm.org/trixie/ llvm-toolchain-trixie-23 main" \
+        > /etc/apt/sources.list.d/llvm.list \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
-        clang-23 clang-tidy-23 clang-tools-23 \
+        clang-23 clang-tidy-23 clang-tools-23 libclang-rt-23-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
