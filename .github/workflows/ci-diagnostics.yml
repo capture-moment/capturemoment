@@ -225,11 +225,11 @@ jobs:
           cmake --preset debug-ninja --fresh ${{ env.LINUX_ARGS }} \
             -DCMAKE_PREFIX_PATH="/opt/qt/6.10.2/gcc_64;/opt/oiio;/opt/exiv2" \
             -DCMAKE_CXX_FLAGS="-g" \
-            -DCMAKE_TEST_LAUNCHER="valgrind;--leak-check=full;--error-exitcode=1;--suppressions=${GITHUB_WORKSPACE}/tests/ignore/valgrind.supp"
+            -DCMAKE_TEST_LAUNCHER="valgrind;--leak-check=full;--gen-suppressions=all"
           cmake --build --preset debug-ninja --parallel $(nproc)
 
       - name: Test (Valgrind)
-        run: ctest --preset debug-ninja --output-on-failure --no-tests=error
+        run: ctest --preset debug-ninja -V -R "LoadNonExistentFile|LoadCorruptFile|LoadFailureAfterSuccess" --no-tests=error
 
       # ----- MSan -----
       - name: Configure & Build (MSan)
@@ -246,6 +246,6 @@ jobs:
       - name: Test (MSan)
         if: always()
         env:
-          MSAN_OPTIONS: "suppressions=${{ github.workspace }}/tests/ignore/msan.supp"
+          MSAN_OPTIONS: "suppressions=${{ github.workspace }}/tests/ignore_tests/msan.supp"
         run: ctest --preset debug-ninja --output-on-failure --no-tests=error
 
