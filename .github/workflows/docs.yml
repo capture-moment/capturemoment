@@ -27,26 +27,26 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
 
       - name: Generate Doxygen documentation
-        uses: mattnotmitt/doxygen-action@v1.12
+        uses: mattnotmitt/doxygen-action@b84fe17600245bb5db3d6c247cc274ea98c15a3b # v1.12
         with:
           doxyfile-path: './Doxyfile'
 
       - name: Setup Pages
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-        uses: actions/configure-pages@v6
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
 
       - name: Upload Pages artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-        uses: actions/upload-pages-artifact@v7
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: docs/api/html
 
       - name: Deploy to GitHub Pages
         id: deployment
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
