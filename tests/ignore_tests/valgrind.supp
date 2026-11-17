@@ -1,0 +1,14 @@
+{
+   libraw_open_file_uninit
+   Memcheck:Cond
+   fun:_ZN6LibRaw9open_fileEPKc
+   fun:_ZN11OpenImageIO4v3_18RawInput8open_rawEbbRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEERKNS0_9ImageSpecE
+   ...
+}
+{
+   oiio_imagecache_invalidate_uninit
+   Memcheck:Cond
+   fun:_ZN11OpenImageIO4v3_114ImageCacheImpl10invalidateEPNS0_14ImageCacheFileEb
+   fun:_ZN11OpenImageIO4v3_114ImageCacheImpl10invalidateENS0_7ustringEb
+   ...
+}

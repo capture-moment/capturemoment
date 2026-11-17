@@ -90,19 +90,19 @@ private:
      * @details Set to 1920 (Full HD). This size is large enough to overcome
      * kernel launch overhead but small enough to keep the benchmark fast (< 1s).
      */
-    static constexpr int k_benchmark_width = 1920;
+    static constexpr int k_benchmark_width { 1920 };
 
     /**
      * @brief Height of the test image used for benchmarking.
      * @details Set to 1080 (Full HD).
      */
-    static constexpr int k_benchmark_height = 1080;
+    static constexpr int k_benchmark_height { 1080 };
 
     /**
      * @brief Number of color channels in the test image.
      * @details Set to 4 (RGBA). This represents the typical working format of the application.
      */
-    static constexpr int k_benchmark_channels = 4;
+    static constexpr int k_benchmark_channels { 4 };
 
     /**
      * @brief Performance threshold required to select the GPU backend.
@@ -111,7 +111,7 @@ private:
      * (Host -> Device) and potential driver overhead. If times are close, the CPU is preferred
      * for simplicity and power consumption.
      */
-    static constexpr double k_gpu_advantage_threshold = 0.9;
+    static constexpr double k_gpu_advantage_threshold { 0.9 };
 
     // ============================================================
     // Benchmarking Methods

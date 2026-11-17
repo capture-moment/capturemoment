@@ -96,6 +96,10 @@ function(find_openimageio_package)
     endif()
     
     if(OpenImageIO_FOUND)
+        if(CMAKE_CXX_COMPILER_ID MATCHES "Clang" AND TARGET OpenImageIO::OpenImageIO)
+            target_compile_definitions(OpenImageIO::OpenImageIO INTERFACE FMT_CONSTEVAL=)
+        endif()
+
         set(OpenImageIO_FOUND TRUE PARENT_SCOPE)
         set(OpenImageIO_VERSION ${OpenImageIO_VERSION} PARENT_SCOPE)
     else()
@@ -167,11 +171,15 @@ function(find_halide_package)
     file(TO_CMAKE_PATH "${_halide_dir}" _halide_dir)
     message(STATUS "Halide install dir: ${_halide_dir}")
 
-    # 4. Locate the CMake package inside the venv
+    # 4. Route all CMake Python lookups to the venv interpreter: the Halide
+    set(Python_EXECUTABLE  "${_venv_python}" CACHE FILEPATH "" FORCE)
+    set(Python3_EXECUTABLE "${_venv_python}" CACHE FILEPATH "" FORCE)
+
+    # 5. Locate the CMake package inside the venv.
     find_package(Halide ${_halide_version} CONFIG REQUIRED
-        PATHS 
-          "${_halide_dir}"
-          "${_venv_dir}"
+        PATHS
+          "${_halide_dir}/lib64/cmake/Halide"
+          "${_halide_dir}/lib/cmake/Halide"
         NO_DEFAULT_PATH
     )
 

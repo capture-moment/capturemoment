@@ -1,4 +1,4 @@
-FROM gcc:16.2.0
+FROM gcc:16.2-trixie
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -8,7 +8,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     ninja-build python3 python3-pip python3-venv ccache \
     patchelf desktop-file-utils \
-    libxcb-cursor0 \
+    libxcb-cursor0 valgrind \
     libcurl4-openssl-dev libxkbcommon-dev libgl1-mesa-dev \
     libbrotli-dev libexpat1-dev libinih-dev libssh-dev \
     libxml2-utils zlib1g-dev libjpeg-dev libfreetype-dev \
@@ -22,9 +22,9 @@ RUN apt-get update && apt-get install -y \
 # AppImage packaging tools
 # ==============================================================================
 RUN mkdir -p /opt/tools && cd /opt/tools && \
-    wget -q --max-redirect=5 \
+    curl -fsSL --proto '=https' --tlsv1.2 -o linuxdeploy-x86_64.AppImage \
       https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage && \
-    wget -q --max-redirect=5 \
+    curl -fsSL --proto '=https' --tlsv1.2 -o linuxdeploy-plugin-qt-x86_64.AppImage \
       https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage && \
     chmod +x linuxdeploy*.AppImage
 
@@ -32,7 +32,6 @@ RUN mkdir -p /opt/tools && cd /opt/tools && \
 # Install Python core packages
 # ==============================================================================
 RUN pip3 install --break-system-packages cmake aqtinstall
-RUN pip3 install --break-system-packages --only-binary :all: halide==22.1.0
 
 # ==============================================================================
 # Install Qt framework
@@ -79,5 +78,25 @@ RUN git clone --depth 1 --branch v3.1.14.0 \
     cmake --build /tmp/oiio-build --parallel $(nproc) && \
     cmake --install /tmp/oiio-build && \
     rm -rf /tmp/*
+
+# ==============================================================================
+# LLVM/Clang toolchain (clang-tidy, run-clang-tidy)
+# ==============================================================================
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        curl gnupg lsb-release ca-certificates jq \
+    && curl -fsSL --proto '=https' --tlsv1.2 -o /tmp/llvm-snapshot.gpg.key https://apt.llvm.org/llvm-snapshot.gpg.key \
+    && gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg /tmp/llvm-snapshot.gpg.key \
+    && rm -f /tmp/llvm-snapshot.gpg.key \
+    && echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] https://apt.llvm.org/trixie/ llvm-toolchain-trixie-23 main" \
+        > /etc/apt/sources.list.d/llvm.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        clang-23 clang-tidy-23 clang-tools-23 libclang-rt-23-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN GCC_DIR="$(dirname "$(gcc -print-libgcc-file-name)")" \
+    && for c in clang clang++; do \
+         echo "--gcc-install-dir=${GCC_DIR}" > "/usr/lib/llvm-23/bin/${c}.cfg"; \
+       done
 
 WORKDIR /app

@@ -12,26 +12,29 @@
 
 namespace CaptureMoment::Core::Workers {
 
-void WorkerRegistry::registerAll(WorkerBuilder& builder) {
-    spdlog::info("WorkerRegistry: Registering all workers");
+void WorkerRegistry::registerAll(WorkerBuilder& builder)
+{
+    spdlog::info("[WorkerRegistry::registerAll]: Registering all workers");
 
     registerHalideWorkers(builder);
     // registerAIWorkers(builder); // TODO: Enable when AI worker is ready
 
-    spdlog::info("WorkerRegistry: All workers registered");
+    spdlog::info("[WorkerRegistry::registerAll]: All workers registered");
 }
 
-void WorkerRegistry::registerHalideWorkers(WorkerBuilder& builder) {
-    spdlog::debug("WorkerRegistry: Registering Halide workers");
+void WorkerRegistry::registerHalideWorkers(WorkerBuilder& builder)
+{
+    spdlog::debug("[WorkerRegistry::registerHalideWorkers]: Registering Halide workers");
 
     builder.registerCreator(WorkerType::HalideOperation, []() {
         return std::make_unique<HalideOperationWorker>();
     });
-    spdlog::trace("WorkerRegistry: Registered HalideOperationWorker");
+    spdlog::trace("[WorkerRegistry::registerHalideWorkers]: Registered HalideOperationWorker");
 }
 
-void WorkerRegistry::registerAIWorkers(WorkerBuilder& builder) {
-    spdlog::debug("WorkerRegistry: Registering AI/Computer Vision workers");
+void WorkerRegistry::registerAIWorkers([[maybe_unused]] WorkerBuilder& builder)
+{
+    spdlog::debug("[WorkerRegistry::registerAIWorkers]: Registering AI/Computer Vision workers");
 
     // Exemple: Sky Replacement
     // builder.registerCreator(WorkerType::SkyAI, []() {

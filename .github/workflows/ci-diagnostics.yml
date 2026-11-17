@@ -1,0 +1,231 @@
+# .github/workflows/diagnostics.yml
+
+name: CI Diagnostics
+
+on:
+  pull_request:
+    branches: ["main", "develop"]
+  workflow_dispatch:
+
+concurrency:
+  group: diagnostics-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COMMON_ARGS: "-DBUILD_DESKTOP_UI=ON -DBUILD_TESTS=ON -DBUILD_DIAGNOSTICS=OFF"
+  EXIV2_VERSION: "v0.28.7"
+  OIIO_VERSION: "v3.1.14.0"
+  INSTALL_PREFIX: "/Users/runner/local"
+  CLANG_VERSION: "23"
+
+  # Windows
+  USERNAME: ${{ github.repository_owner }}
+  FEED_URL: https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json
+  VCPKG_BINARY_SOURCES: "clear;nuget,https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json,readwrite"
+
+jobs:
+  # ---------------- Windows : ASan ----------------
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    permissions:
+      packages: write
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: recursive
+
+      - uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4
+        with:
+          version: '6.10.2'
+          target: 'desktop'
+          arch: 'win64_msvc2022_64'
+          modules: 'qtshadertools'
+
+      - name: Setup vcpkg
+        shell: pwsh
+        run: |
+          cd C:\vcpkg
+          git fetch origin cd61e1e26a038e82d6550a3ebbe0fbbfe7da78e3
+          git checkout cd61e1e26a038e82d6550a3ebbe0fbbfe7da78e3
+          .\bootstrap-vcpkg.bat
+          echo "VCPKG_ROOT=C:\vcpkg" >> $env:GITHUB_ENV
+      - name: Configure NuGet source for vcpkg cache
+        shell: pwsh
+        env:
+          FEED_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $nugetExe = & "$env:VCPKG_ROOT\vcpkg.exe" fetch nuget | Select-Object -Last 1
+          Write-Host "Using NuGet executable: $nugetExe"
+          & $nugetExe sources add `
+            -Source "$env:FEED_URL" `
+            -StorePasswordInClearText `
+            -Name "GitHubPackages" `
+            -UserName "$env:USERNAME" `
+            -Password "$env:FEED_TOKEN"
+          & $nugetExe setapikey "$env:FEED_TOKEN" -Source "$env:FEED_URL"
+
+      - uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4
+        with:
+          arch: x64
+
+      - name: Configure & Build (ASan)
+        shell: pwsh
+        run: |
+          cmake --preset debug-vcpkg-msvc ${{ env.COMMON_ARGS }} `
+            "-DCMAKE_CXX_FLAGS=/DWIN32 /D_WINDOWS /EHsc /GR /Zi /fsanitize=address" `
+            "-DCMAKE_C_FLAGS=/DWIN32 /D_WINDOWS /Zi /fsanitize=address"
+          cmake --build --preset debug-vcpkg-msvc --parallel
+
+      - name: Test (ASan)
+        shell: pwsh
+        run: ctest --preset debug-vcpkg-msvc --output-on-failure --no-tests=error
+
+  # ---------------- macOS : ASan+UBSan puis TSan ----------------
+  macos:
+    runs-on: macos-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: recursive
+
+      - run: brew install ccache inih libpng jpeg libtiff openexr pystring
+
+      - name: Cache ccache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ~/Library/Caches/ccache
+          key: ccache-diagnostics-macos-${{ github.sha }}
+          restore-keys: ccache-diagnostics-macos-
+
+      - name: Cache Exiv2
+        id: cache-exiv2
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ env.INSTALL_PREFIX }}/exiv2
+          key: exiv2-${{ env.EXIV2_VERSION }}-macos
+
+      - name: Build Exiv2
+        if: steps.cache-exiv2.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch ${{ env.EXIV2_VERSION }} https://github.com/Exiv2/exiv2.git /tmp/exiv2-src
+          cmake -S /tmp/exiv2-src -B /tmp/exiv2-src/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_PREFIX }}/exiv2 \
+            -DBUILD_SHARED_LIBS=ON -DEXIV2_BUILD_SAMPLES=OFF -DEXIV2_BUILD_TESTS=OFF
+          cmake --build /tmp/exiv2-src/build --parallel
+          cmake --install /tmp/exiv2-src/build
+
+      - name: Cache OpenImageIO
+        id: cache-oiio
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: ${{ env.INSTALL_PREFIX }}/oiio
+          key: oiio-${{ env.OIIO_VERSION }}-macos
+
+      - name: Build OpenImageIO
+        if: steps.cache-oiio.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch ${{ env.OIIO_VERSION }} https://github.com/AcademySoftwareFoundation/OpenImageIO.git /tmp/oiio-src
+          cmake -S /tmp/oiio-src -B /tmp/oiio-src/build -G Ninja -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=${{ env.INSTALL_PREFIX }}/oiio \
+            -DEXIV2_ROOT=${{ env.INSTALL_PREFIX }}/exiv2 \
+            -DOpenImageIO_BUILD_MISSING_DEPS=required -DSTOP_ON_WARNING=0 \
+            -DOIIO_BUILD_TOOLS=OFF -DOIIO_BUILD_TESTS=OFF -DUSE_PYTHON=OFF
+          cmake --build /tmp/oiio-src/build --parallel
+          cmake --install /tmp/oiio-src/build
+
+      - uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4
+        with:
+          version: '6.10.2'
+          target: 'desktop'
+          host: 'mac'
+          modules: 'qtshadertools'
+
+      # ----- ASan + UBSan -----
+      - name: Configure & Build (ASan+UBSan)
+        run: |
+          cmake --preset debug-homebrew --fresh ${{ env.COMMON_ARGS }} \
+            -DCMAKE_PREFIX_PATH="${{ env.INSTALL_PREFIX }}/exiv2;${{ env.INSTALL_PREFIX }}/oiio" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g" \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_C_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer -g"
+          cmake --build --preset debug-homebrew --parallel
+
+      - name: Test (ASan+UBSan)
+        run: ctest --preset debug-homebrew --output-on-failure --no-tests=error
+
+      # ----- TSan -----
+      - name: Configure & Build (TSan)
+        if: always()
+        run: |
+          cmake --preset debug-homebrew --fresh ${{ env.COMMON_ARGS }} \
+            -DCMAKE_PREFIX_PATH="${{ env.INSTALL_PREFIX }}/exiv2;${{ env.INSTALL_PREFIX }}/oiio" \
+            -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -g" \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_C_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -g"
+          cmake --build --preset debug-homebrew --parallel
+
+      - name: Test (TSan)
+        if: always()
+        run: ctest --preset debug-homebrew --output-on-failure --no-tests=error
+
+  # ---------------- Docker image ----------------
+  wait-image-docker-linux:
+    runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.wait.outputs.image }}
+    steps:
+      - id: wait
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          IMAGE="ghcr.io/${{ github.repository }}/build-linux"
+          if [ "${{ github.event_name }}" = "pull_request" ] \
+             && [ "${{ github.event.pull_request.head.repo.fork }}" = "true" ]; then
+            echo "image=$IMAGE:ci" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          TAG="ci-$(echo "$HEAD_SHA" | cut -c1-7)"
+          echo "${GH_TOKEN}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          for i in $(seq 1 60); do
+            if docker manifest inspect "$IMAGE:$TAG" >/dev/null 2>&1; then
+              echo "image=$IMAGE:$TAG" >> "$GITHUB_OUTPUT"; exit 0
+            fi
+            sleep 60
+          done
+          echo "::error::$IMAGE:$TAG absent after 60 min (build docker failed ?)"; exit 1
+
+  # ---------------- Linux : Valgrind ----------------
+  linux:
+    needs: wait-image-docker-linux
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    permissions:
+      contents: read
+      packages: read
+    container:
+      image: ${{ needs.wait-image-docker-linux.outputs.image }}
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      options: --user root
+    env:
+      QT_QPA_PLATFORM: offscreen
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: recursive
+
+      # ----- Valgrind -----
+      - name: Configure & Build (Valgrind)
+        run: |
+          cmake --preset debug-ninja --fresh ${{ env.COMMON_ARGS }} \
+            -DCMAKE_PREFIX_PATH="/opt/qt/6.10.2/gcc_64;/opt/oiio;/opt/exiv2" \
+            -DCMAKE_CXX_FLAGS="-g" \
+            -DCMAKE_TEST_LAUNCHER="valgrind;--leak-check=full;--error-exitcode=1;-s;--suppressions=${GITHUB_WORKSPACE}/tests/ignore_tests/valgrind.supp"
+          cmake --build --preset debug-ninja --parallel $(nproc)
+
+      - name: Test (Valgrind)
+        run: ctest --preset debug-ninja --output-on-failure --no-tests=error

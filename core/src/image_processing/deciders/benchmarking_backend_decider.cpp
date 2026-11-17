@@ -32,7 +32,7 @@ static bool should_test_feature(Halide::Target::Feature feature)
     case Halide::Target::Metal:
         if constexpr (!k_has_metal)
         {
-            spdlog::debug("[BackendDecider] Metal skipped - not available on this platform");
+            spdlog::debug("[BackendDecider::BackendDecider]: Metal skipped - not available on this platform");
             return false;
         }
         return true;
@@ -40,7 +40,7 @@ static bool should_test_feature(Halide::Target::Feature feature)
     case Halide::Target::D3D12Compute:
         if constexpr (!k_has_d3d12)
         {
-            spdlog::debug("[BackendDecider] DirectX12 skipped - not available on this platform");
+            spdlog::debug("[BackendDecider::BackendDecider]: DirectX12 skipped - not available on this platform");
             return false;
         }
         return true;
@@ -48,7 +48,7 @@ static bool should_test_feature(Halide::Target::Feature feature)
     case Halide::Target::CUDA:
         if constexpr (!k_has_cuda)
         {
-            spdlog::debug("[BackendDecider] CUDA skipped - not available on this platform");
+            spdlog::debug("[BackendDecider::BackendDecider]: CUDA skipped - not available on this platform");
             return false;
         }
         return true;
@@ -75,11 +75,11 @@ static Halide::Buffer<float> create_fresh_test_buffer(int width, int height, int
 {
     Halide::Buffer<float> buffer(width, height, channels);
 
-    for (size_t c = 0; c < channels; ++c)
+    for (auto c {0}; c < channels; ++c)
     {
-        for (size_t y = 0; y < height; ++y)
+        for (auto y {0}; y < height; ++y)
         {
-            for (size_t x = 0; x < width; ++x)
+            for (auto x {0}; x < width; ++x)
             {
                 buffer(x, y, c) = static_cast<float>((x + y + c) % 256) / 255.0f;
             }
@@ -233,11 +233,11 @@ std::chrono::milliseconds BenchmarkingBackendDecider::benchmark_cpu() const
         Halide::Buffer<float> buffer { create_fresh_test_buffer(
             k_benchmark_width, k_benchmark_height, k_benchmark_channels) };
 
-        auto pipeline = create_benchmark_pipeline(buffer, x, y, c);
+        auto pipeline { create_benchmark_pipeline(buffer, x, y, c) };
 
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start { std::chrono::high_resolution_clock::now() };
         pipeline.realize(buffer);
-        auto end = std::chrono::high_resolution_clock::now();
+        auto end { std::chrono::high_resolution_clock::now() };
 
         return std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     }
