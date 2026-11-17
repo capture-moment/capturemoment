@@ -32,11 +32,11 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
 
-      - uses: jurplel/install-qt-action@v4
+      - uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4
         with:
           version: '6.10.2'
           target: 'desktop'
@@ -66,7 +66,7 @@ jobs:
             -Password "$env:FEED_TOKEN"
           & $nugetExe setapikey "$env:FEED_TOKEN" -Source "$env:FEED_URL"
 
-      - uses: TheMrMilchmann/setup-msvc-dev@v4
+      - uses: TheMrMilchmann/setup-msvc-dev@368ef7d1ee4d1171b31d4a7f67f4d954f903f5a9 # v4
         with:
           arch: x64
 
@@ -87,14 +87,14 @@ jobs:
     runs-on: macos-latest
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
 
       - run: brew install ccache inih libpng jpeg libtiff openexr pystring
 
       - name: Cache ccache
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ~/Library/Caches/ccache
           key: ccache-diagnostics-macos-${{ github.sha }}
@@ -102,7 +102,7 @@ jobs:
 
       - name: Cache Exiv2
         id: cache-exiv2
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ env.INSTALL_PREFIX }}/exiv2
           key: exiv2-${{ env.EXIV2_VERSION }}-macos
@@ -119,7 +119,7 @@ jobs:
 
       - name: Cache OpenImageIO
         id: cache-oiio
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: ${{ env.INSTALL_PREFIX }}/oiio
           key: oiio-${{ env.OIIO_VERSION }}-macos
@@ -136,7 +136,7 @@ jobs:
           cmake --build /tmp/oiio-src/build --parallel
           cmake --install /tmp/oiio-src/build
 
-      - uses: jurplel/install-qt-action@v4
+      - uses: jurplel/install-qt-action@b344308e4483fc892e0d27b3cd1b173ebdd95f06 # v4
         with:
           version: '6.10.2'
           target: 'desktop'
@@ -214,7 +214,7 @@ jobs:
     env:
       QT_QPA_PLATFORM: offscreen
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
 
