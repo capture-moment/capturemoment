@@ -84,7 +84,7 @@ RUN git clone --depth 1 --branch v3.1.14.0 \
 # ==============================================================================
 RUN apt-get update && apt-get install -y --no-install-recommends \
         wget gnupg lsb-release ca-certificates jq \
-    && wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+    && wget -qO- --max-redirect=1 https://apt.llvm.org/llvm-snapshot.gpg.key \
         | gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg \
     && echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] https://apt.llvm.org/trixie/ llvm-toolchain-trixie-23 main" \
         > /etc/apt/sources.list.d/llvm.list \
