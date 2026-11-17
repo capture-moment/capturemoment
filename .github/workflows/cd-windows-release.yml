@@ -122,7 +122,7 @@ jobs:
 
       - name: Upload installer artifact (always, for manual test runs)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: CaptureMoment-win64-installer
           path: build/release-vcpkg-msvc/packages/CaptureMoment-win64.exe
