@@ -22,9 +22,9 @@ RUN apt-get update && apt-get install -y \
 # AppImage packaging tools
 # ==============================================================================
 RUN mkdir -p /opt/tools && cd /opt/tools && \
-    wget -q --max-redirect=1 \
+    curl -fsSL --proto '=https' --tlsv1.2 -o linuxdeploy-x86_64.AppImage \
       https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage && \
-    wget -q --max-redirect=1 \
+    curl -fsSL --proto '=https' --tlsv1.2 -o linuxdeploy-plugin-qt-x86_64.AppImage \
       https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage && \
     chmod +x linuxdeploy*.AppImage
 
@@ -83,9 +83,10 @@ RUN git clone --depth 1 --branch v3.1.14.0 \
 # LLVM/Clang toolchain (clang-tidy, run-clang-tidy)
 # ==============================================================================
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        wget gnupg lsb-release ca-certificates jq \
-    && wget -qO- --max-redirect=1 https://apt.llvm.org/llvm-snapshot.gpg.key \
-        | gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg \
+        curl gnupg lsb-release ca-certificates jq \
+    && curl -fsSL --proto '=https' --tlsv1.2 -o /tmp/llvm-snapshot.gpg.key https://apt.llvm.org/llvm-snapshot.gpg.key \
+    && gpg --dearmor -o /usr/share/keyrings/llvm-archive-keyring.gpg /tmp/llvm-snapshot.gpg.key \
+    && rm -f /tmp/llvm-snapshot.gpg.key \
     && echo "deb [signed-by=/usr/share/keyrings/llvm-archive-keyring.gpg] https://apt.llvm.org/trixie/ llvm-toolchain-trixie-23 main" \
         > /etc/apt/sources.list.d/llvm.list \
     && apt-get update \
